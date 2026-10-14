@@ -166,7 +166,8 @@ class InputTests(unittest.TestCase):
             keyboard.send_text("{value}", 0, lambda: None, lambda: False,
                                wait_interval=lambda seconds: delays.append(seconds),
                                ide_mode=True, skip_auto_closers="}", structure_delay=0.25)
-        self.assertEqual("".join(sent), "{value")
+        self.assertEqual("".join(sent), "{value}")
+
         self.assertEqual(delays, [0.25, 0.25])
         sent.clear()
         delays.clear()
@@ -174,10 +175,39 @@ class InputTests(unittest.TestCase):
             keyboard.send_text("{value}", 0, lambda: None, lambda: False, ide_mode=True, skip_auto_closers="")
         self.assertEqual("".join(sent), "{value}")
 
+    def test_context_aware_planner_ignores_comments_and_strings(self):
+        profile = keyboard.InputProfile("vscode", False, "})", False)
+        source = '// { [ ( "\nstd::string s = "{[(]";\nif (x) {\n  y();\n}'
+        actions = list(keyboard.iter_text_actions(source, profile=profile))
+        emitted = "".join(a.char for a in actions if a.char is not None and a.emit)
+        self.assertEqual(emitted, '// { [ ( "\nstd::string s = "{[(]";\nif (x {\n  y(;\n')
+        self.assertEqual([a.char for a in actions if a.reason == "autoclose"], [")", ")", "}"])
+
+    def test_cleanup_selects_generated_suffix(self):
+        calls = []
+        profile = keyboard.InputProfile("vscode", False, "}", False)
+        with patch.object(keyboard, "_send_key", side_effect=lambda **kwargs: calls.append(kwargs)):
+            count = keyboard.send_text("if (x) {\n", 0, lambda: None, lambda: False,
+                                       profile=profile)
+        self.assertEqual(count, len("if (x) {\n"))
+        cleanup_calls = [call for call in calls if call.get("w_vk") in {
+            keyboard.VK_CONTROL, keyboard.VK_SHIFT, keyboard.VK_END, keyboard.VK_BACKSPACE
+        }]
+        self.assertEqual(cleanup_calls, [
+            {"w_vk": keyboard.VK_CONTROL},
+            {"w_vk": keyboard.VK_SHIFT},
+            {"w_vk": keyboard.VK_END},
+            {"w_vk": keyboard.VK_END, "flags": keyboard.KEYEVENTF_KEYUP},
+            {"w_vk": keyboard.VK_SHIFT, "flags": keyboard.KEYEVENTF_KEYUP},
+            {"w_vk": keyboard.VK_CONTROL, "flags": keyboard.KEYEVENTF_KEYUP},
+            {"w_vk": keyboard.VK_BACKSPACE},
+            {"w_vk": keyboard.VK_BACKSPACE, "flags": keyboard.KEYEVENTF_KEYUP},
+        ])
+
     def test_estimate_counts_follow_ide_mode(self):
         text = "if {\n    value();\n}"
         self.assertEqual(AutoTyperApp._effective_character_counts(text, True), (15, 3, 2))
-        self.assertEqual(AutoTyperApp._effective_character_counts("{x}", True, "}"), (2, 0, 1))
+        self.assertEqual(AutoTyperApp._effective_character_counts("{x}", True, "}"), (3, 0, 2))
         self.assertEqual(AutoTyperApp._effective_character_counts(text, False), (19, 7, 2))
         self.assertEqual(AutoTyperApp._format_duration(0), "0 秒")
         self.assertEqual(AutoTyperApp._format_duration(65), "1 分 5 秒")

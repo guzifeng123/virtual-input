@@ -1,0 +1,43 @@
+#include <array>
+#include <iostream>
+#include <string>
+
+// T01: ordinary lines
+int first = 1;
+int second = 2;
+
+// T02: brackets on one line
+int twice(int x) { return (x + x); }
+std::array<int, 3> values{1, 2, 3};
+
+// T03: quotes and escapes
+std::string text = "hello";
+std::string empty = "";
+std::string escaped = "say \\\"hi\\\"";
+std::string path = "a\\\\b";
+std::string symbols = "{[(<>)]}";
+char letter = 'x';
+char quote = '\'';
+
+// T04: brackets inside comments: { [ ( < " '
+/* T05: block comment
+   brackets here: { [ (
+*/
+
+// T06: indentation and nested blocks
+int main() {
+    int total = 0;
+    if (values[0] < values[1]) {
+        total = twice(values[0]);
+        if (total > 0) {
+            total++;
+        }
+        total += 2;
+    }
+
+    // T07: line after a blank line
+    total += (values[1] + values[2]);
+    std::cout << text << " " << total << '\\n';
+    return 0;
+}
+// T08: end of input

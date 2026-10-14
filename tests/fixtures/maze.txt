@@ -1,0 +1,78 @@
+#include <array>
+#include <iostream>
+#include <stack>
+#include <string>
+
+using namespace std;
+
+struct Pos {
+	int r, c;
+};
+
+struct Node {
+	Pos pos;
+	int nextDir; // 0..3: east, south, west, north
+};
+
+int main() {
+	array<string, 10> maze;
+	Pos start{-1, -1}, finish{-1, -1};
+	
+	for (int r = 0; r < 10; ++r) {
+		if (!getline(cin, maze[r])) return 0;
+		if (!maze[r].empty() && maze[r].back() == '\r') maze[r].pop_back();
+		if (maze[r].size() < 10) maze[r].append(10 - maze[r].size(), ' ');
+		for (int c = 0; c < 10; ++c) {
+			if (maze[r][c] == 'S') start = {r, c};
+			if (maze[r][c] == 'E') finish = {r, c};
+		}
+	}
+	
+	const int dr[4] = {0, 1, 0, -1};
+	const int dc[4] = {1, 0, -1, 0};
+	bool visited[10][10] = {};
+	stack<Node> path;
+	path.push({start, 0});
+	visited[start.r][start.c] = true;
+	
+	bool found = false;
+	while (!path.empty()) {
+		Node &cur = path.top();
+		if (cur.pos.r == finish.r && cur.pos.c == finish.c) {
+			found = true;
+			break;
+		}
+		
+		bool moved = false;
+		while (cur.nextDir < 4) {
+			int dir = cur.nextDir++;
+			int nr = cur.pos.r + dr[dir];
+			int nc = cur.pos.c + dc[dir];
+			if (nr < 0 || nr >= 10 || nc < 0 || nc >= 10 ||
+				visited[nr][nc] || maze[nr][nc] == '#') {
+				continue;
+			}
+			visited[nr][nc] = true;
+			path.push({{nr, nc}, 0});
+			moved = true;
+			break;
+		}
+		
+		if (!moved) {
+			// A dead branch is marked immediately; S is handled the same way
+			// when no route to E exists.
+			maze[cur.pos.r][cur.pos.c] = '!';
+			path.pop();
+		}
+	}
+	
+	if (found) {
+		while (!path.empty()) {
+			maze[path.top().pos.r][path.top().pos.c] = '*';
+			path.pop();
+		}
+	}
+	
+	for (const string &row : maze) cout << row.substr(0, 10) << '\n';
+	return 0;
+}

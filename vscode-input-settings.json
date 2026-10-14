@@ -1,0 +1,23 @@
+{
+    "[cpp]": {
+        "editor.autoClosingBrackets": "never",
+        "editor.autoClosingQuotes": "never",
+        "editor.autoClosingOvertype": "never",
+        "editor.autoSurround": "never",
+        "editor.autoIndent": "none",
+        "editor.formatOnType": false,
+        "editor.formatOnPaste": false,
+        "editor.formatOnSave": false,
+        "editor.acceptSuggestionOnEnter": "off",
+        "editor.quickSuggestions": false,
+        "editor.suggestOnTriggerCharacters": false,
+        "editor.tabCompletion": "off",
+        "editor.inlineSuggest.enabled": false,
+        "editor.insertSpaces": false,
+        "editor.detectIndentation": false,
+        "editor.trimAutoWhitespace": false,
+        "files.trimTrailingWhitespace": false,
+        "files.trimFinalNewlines": false,
+        "files.insertFinalNewline": false
+    }
+}
